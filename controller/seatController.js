@@ -50,7 +50,7 @@ async function deleteseat(req, res) {
 }
 async function updateseat(req, res) {
   try {
-    const { eatNumber, name, vilage, mobile, date,busname,busnumber,time } = req.body;
+    const { seatNumber, name, vilage, mobile, date,busname,busnumber,time } = req.body;
 
     const currentSeat = await SeatModel.findByIdAndUpdate(req.params.id, {
       name: name,
