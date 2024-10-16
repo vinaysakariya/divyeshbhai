@@ -5,7 +5,7 @@ const {
 } = require("../controller/bustInfoController");
 const { getsearchBus } = require("../controller/searchController");
 // const { allocateSeats } = require('../controller/seatController');
-// const {  } = require('../controllers/');
+// const {  } = require('../controllers/');s
 
 const router = express.Router();
 
