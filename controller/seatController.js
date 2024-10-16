@@ -4,7 +4,7 @@ const { translate } = require("@vitalets/google-translate-api");
 
 async function allocateSeats(req, res) {
   try {
-    const { seatNumber, name, vilage, mobile, date } = req.body;
+    const { seatNumber, name, vilage, mobile, date,busname,busnumber,time } = req.body;
     const exsitRoute=await routeInfo.findById(req.params.id)
     if(!exsitRoute){
       res.status(404).json(`Route not found`);
@@ -20,6 +20,9 @@ async function allocateSeats(req, res) {
       vilage: vilage,
       mobile: mobile,
       date: date,
+      busnumber:busnumber,
+      busname:busname,
+      time:time,
       seatNumber: seatNumber,
       route:exsitRoute._id
     });
@@ -47,12 +50,17 @@ async function deleteseat(req, res) {
 }
 async function updateseat(req, res) {
   try {
-    const { name, vilage, mobile } = req.body;
+    const { eatNumber, name, vilage, mobile, date,busname,busnumber,time } = req.body;
 
     const currentSeat = await SeatModel.findByIdAndUpdate(req.params.id, {
       name: name,
       vilage: vilage,
       mobile: mobile,
+      date: date,
+      busnumber:busnumber,
+      busname:busname,
+      time:time,
+      seatNumber: seatNumber,
     });
     res.status(201).json({ data: currentSeat });
   } catch (error) {
