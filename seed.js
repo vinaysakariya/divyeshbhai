@@ -25,7 +25,7 @@ async function seedAdminAndRole() {
     if (admin.length === 0) {
       const hashedPassword = await bcrypt.hash("1812", 10);
       await User.create({
-        email: "divu",
+        email: "divuhapani",
         password: hashedPassword, // Note: In a real application, hash passwords securely
       });
     }
