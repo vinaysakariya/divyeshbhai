@@ -8,7 +8,14 @@ async function getsearchAll(req, res) {
 
     // Initialize an empty filter object
     const filter = {};
+
+    // Get route info based on the route
     const ExsitingRoute = await Routeinfo.findOne({ route });
+
+    // If no route is found, return an error
+    if (!ExsitingRoute) {
+      return res.status(404).json({ error: "Route not found" });
+    }
 
     // Add date range filter if the date is provided
     if (dateStr) {
@@ -27,9 +34,7 @@ async function getsearchAll(req, res) {
           $lte: endOfDay,
         };
       } else {
-        return res
-          .status(400)
-          .json({ error: "Invalid date format. Please use YYYY-MM-DD." });
+        return res.status(400).json({ error: "Invalid date format. Please use YYYY-MM-DD." });
       }
     }
 
@@ -42,40 +47,51 @@ async function getsearchAll(req, res) {
         $match: filter,
       });
     }
-    pipeline.push(
-      {
-        $match: {
-          route: ExsitingRoute._id,
-        },
+
+    // Add another match stage for the route
+    pipeline.push({
+      $match: {
+        route: ExsitingRoute._id, // Match based on the route ID from the routeinfo collection
       },
-      {
-        $lookup: {
-          from: "routeinfos", // The collection to join
-          localField: "route", // Field from the `orders` collection
-          foreignField: "_id", // Field from the `customers` collection
-          as: "routeDetails", // Output array field name
-        },
+    });
+
+    // Join the routeinfo details using $lookup
+    pipeline.push({
+      $lookup: {
+        from: "routeinfos", // The collection to join
+        localField: "route", // Field from the `SeatModel` collection
+        foreignField: "_id", // Field from the `routeinfos` collection
+        as: "routeDetails", // Output array field name
       },
-      {
-        $unwind: "$routeDetails", // Unwind the array to merge customer details
-      },
-      {
-        $sort: { "ExsitingRoute.busname": 1 } // Sort by bunname in ascending order
-      }
-    );
+    });
+
+    // Unwind the "routeDetails" array to flatten it
+    pipeline.push({
+      $unwind: "$routeDetails", // Unwind to merge route details
+    });
+
+    // Sort by busname in ascending order
+    pipeline.push({
+      $sort: { "routeDetails.busname": 1 }, // Sort by busname from the routeDetails field
+    });
+
+    // Log the pipeline for debugging
     console.log("pipeline", pipeline);
 
     // Run the aggregation pipeline
     const documents = await SeatModel.aggregate(pipeline);
 
+    // Return the results
     return res.status(200).json({
       data: documents,
     });
+
   } catch (error) {
     console.error("Error:", error);
     return res.status(500).json({ error: error.message });
   }
 }
+
 
 
 async function getsearchBus(req, res) {
