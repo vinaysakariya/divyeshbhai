@@ -60,7 +60,7 @@ async function getsearchAll(req, res) {
         $unwind: "$routeDetails", // Unwind the array to merge customer details
       },
       {
-        $sort: { "routeDetails.busname": 1 } // Sort by bunname in ascending order
+        $sort: { "routeinfos.busname": 1 } // Sort by bunname in ascending order
       }
     );
     console.log("pipeline", pipeline);
