@@ -2,6 +2,7 @@ const SeatModel = require("../models/bookedseat");
 const Businfo = require("../models/busInfo");
 const Routeinfo = require("../models/routeinfo");
 async function getsearchAll(req, res) {
+  console.log("object");
   try {
     // Extract the Date parameter from the query string
     const { Date: dateStr, route } = req.query;
@@ -57,9 +58,13 @@ async function getsearchAll(req, res) {
         },
       },
       {
-        $unwind: "$routeDetails", // Unwind the array to merge customer details
+        $unwind: "$routeDetails", // Unwind the array to merge route details
+      },
+      {
+        $sort: { "routeDetails.busname": 1 }, // Sort by busname (1 for ascending, -1 for descending)
       }
     );
+
     console.log("pipeline", pipeline);
 
     // Run the aggregation pipeline
@@ -73,6 +78,7 @@ async function getsearchAll(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
 
 async function getsearchBus(req, res) {
   try {
