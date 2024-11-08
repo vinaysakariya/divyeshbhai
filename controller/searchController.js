@@ -70,13 +70,20 @@ async function getsearchAll(req, res) {
       $unwind: "$routeDetails", // Unwind to merge route details
     });
 
+    // Ensure busname exists and is not null
+    pipeline.push({
+      $match: {
+        "routeDetails.busname": { $exists: true, $ne: null },
+      },
+    });
+
     // Sort by busname in ascending order
     pipeline.push({
       $sort: { "routeDetails.busname": 1 }, // Sort by busname from the routeDetails field
     });
 
     // Log the pipeline for debugging
-    console.log("pipeline", pipeline);
+    console.log("pipeline", JSON.stringify(pipeline, null, 2));
 
     // Run the aggregation pipeline
     const documents = await SeatModel.aggregate(pipeline);
@@ -91,6 +98,7 @@ async function getsearchAll(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
 
 
 
