@@ -42,7 +42,6 @@ async function getsearchAll(req, res) {
         $match: filter,
       });
     }
-
     pipeline.push(
       {
         $match: {
@@ -61,12 +60,9 @@ async function getsearchAll(req, res) {
         $unwind: "$routeDetails", // Unwind the array to merge customer details
       },
       {
-        $sort: {
-          "routeDetails.busname": 1, // Sort by `busname` in ascending order
-        },
+        $sort: { "routeDetails.busname": 1 } // Sort by bunname in ascending order
       }
     );
-
     console.log("pipeline", pipeline);
 
     // Run the aggregation pipeline
