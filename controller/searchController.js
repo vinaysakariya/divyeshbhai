@@ -70,27 +70,36 @@ async function getsearchAll(req, res) {
       $unwind: "$routeDetails", // Unwind to merge route details
     });
 
-    // Ensure busname exists and is not null
+    // Add a debugging step: Log the documents before sorting
     pipeline.push({
-      $match: {
-        "routeDetails.busname": { $exists: true, $ne: null },
-      },
-    });
-
-    // Sort by busname in ascending order
-    pipeline.push({
-      $sort: { "routeDetails.busname": 1 }, // Sort by busname from the routeDetails field
+      $project: {
+        routeDetails: 1, // Only include routeDetails in the output for inspection
+        busname: "$routeDetails.busname",
+        otherFields: 1, // Include other fields as needed
+      }
     });
 
     // Log the pipeline for debugging
-    console.log("pipeline", JSON.stringify(pipeline, null, 2));
+    console.log("pipeline", pipeline);
 
-    // Run the aggregation pipeline
-    const documents = await SeatModel.aggregate(pipeline);
+    // Run the aggregation pipeline to inspect the intermediate results
+    const documentsBeforeSort = await SeatModel.aggregate(pipeline);
+    
+    // Log documents before sorting to check the structure
+    console.log("Documents before sorting:", documentsBeforeSort);
 
-    // Return the results
+    // Apply sorting on the busname field of routeDetails
+    const sortedDocuments = documentsBeforeSort.sort((a, b) => {
+      // Sort alphabetically by busname
+      if (a.routeDetails && b.routeDetails) {
+        return a.routeDetails.busname.localeCompare(b.routeDetails.busname);
+      }
+      return 0;
+    });
+
+    // Return the sorted results
     return res.status(200).json({
-      data: documents,
+      data: sortedDocuments,
     });
 
   } catch (error) {
