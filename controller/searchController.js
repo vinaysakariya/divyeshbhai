@@ -2,14 +2,22 @@ const SeatModel = require("../models/bookedseat");
 const Businfo = require("../models/busInfo");
 const Routeinfo = require("../models/routeinfo");
 async function getsearchAll(req, res) {
-  console.log("object");
+  console.log("object"); // Just for debugging
+
   try {
-    // Extract the Date parameter from the query string
+    // Extract the Date and route parameters from the query string
     const { Date: dateStr, route } = req.query;
 
     // Initialize an empty filter object
     const filter = {};
+
+    // Find the route based on the `route` query parameter
     const ExsitingRoute = await Routeinfo.findOne({ route });
+
+    // If the route doesn't exist, return an error
+    if (!ExsitingRoute) {
+      return res.status(404).json({ error: "Route not found" });
+    }
 
     // Add date range filter if the date is provided
     if (dateStr) {
@@ -22,12 +30,13 @@ async function getsearchAll(req, res) {
         const startOfDay = new Date(dateValue.setHours(0, 0, 0, 0));
         const endOfDay = new Date(dateValue.setHours(23, 59, 59, 999));
 
-        // Create a filter to match documents where the date is within the specified date range
+        // Add the date filter to the filter object
         filter.date = {
           $gte: startOfDay,
           $lte: endOfDay,
         };
       } else {
+        // Return error for invalid date format
         return res
           .status(400)
           .json({ error: "Invalid date format. Please use YYYY-MM-DD." });
@@ -37,39 +46,46 @@ async function getsearchAll(req, res) {
     // Build the aggregation pipeline
     const pipeline = [];
 
-    // Add $match stage to the pipeline if there's a valid filter
+    // If there's a date filter, add $match stage to the pipeline
     if (Object.keys(filter).length > 0) {
       pipeline.push({
         $match: filter,
       });
     }
-    pipeline.push(
-      {
-        $match: {
-          route: ExsitingRoute._id,
-        },
-      },
-      {
-        $lookup: {
-          from: "routeinfos", // The collection to join
-          localField: "route", // Field from the `orders` collection
-          foreignField: "_id", // Field from the `customers` collection
-          as: "routeDetails", // Output array field name
-        },
-      },
-      {
-        $unwind: "$routeDetails", // Unwind the array to merge route details
-      },
-      {
-        $sort: { "routeDetails.busname": 1 }, // Sort by busname (1 for ascending, -1 for descending)
-      }
-    );
 
-    console.log("pipeline", pipeline);
+    // Match by the existing route ID
+    pipeline.push({
+      $match: {
+        route: ExsitingRoute._id,
+      },
+    });
+
+    // Lookup to join the `routeinfos` collection
+    pipeline.push({
+      $lookup: {
+        from: "routeinfos", // The collection to join
+        localField: "route", // Field from `SeatModel`
+        foreignField: "_id", // Field from `routeinfos` collection
+        as: "routeDetails", // Output field for the array of joined documents
+      },
+    });
+
+    // Unwind the array to merge `routeDetails`
+    pipeline.push({
+      $unwind: "$routeDetails", // Unwind to flatten the `routeDetails` array
+    });
+
+    // Sort by `busname` in ascending order
+    pipeline.push({
+      $sort: { "routeDetails.busname": 1 }, // 1 for ascending order, -1 for descending
+    });
+
+    console.log("Aggregation Pipeline:", pipeline);
 
     // Run the aggregation pipeline
     const documents = await SeatModel.aggregate(pipeline);
 
+    // Return the sorted data
     return res.status(200).json({
       data: documents,
     });
@@ -78,6 +94,7 @@ async function getsearchAll(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
 
 
 async function getsearchBus(req, res) {
