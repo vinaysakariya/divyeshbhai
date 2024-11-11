@@ -2,8 +2,6 @@ const SeatModel = require("../models/bookedseat");
 const Businfo = require("../models/busInfo");
 const Routeinfo = require("../models/routeinfo");
 async function getsearchAll(req, res) {
-  console.log("object"); // Just for debugging
-
   try {
     // Extract the Date and route parameters from the query string
     const { Date: dateStr, route } = req.query;
@@ -77,10 +75,8 @@ async function getsearchAll(req, res) {
 
     // Sort by `busname` in ascending order
     pipeline.push({
-      $sort: { "routeDetails.busname": 1 }, // 1 for ascending order, -1 for descending
+      $sort: { busname: 1 }, // 1 for ascending order, -1 for descending
     });
-
-    console.log("Aggregation Pipeline:", pipeline);
 
     // Run the aggregation pipeline
     const documents = await SeatModel.aggregate(pipeline);
@@ -94,8 +90,6 @@ async function getsearchAll(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
-
-
 
 async function getsearchBus(req, res) {
   try {
